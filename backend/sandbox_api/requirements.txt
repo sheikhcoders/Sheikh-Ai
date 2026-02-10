@@ -3,3 +3,4 @@ uvicorn
 playwright
 python-multipart
 httpx
+duckduckgo-search

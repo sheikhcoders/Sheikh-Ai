@@ -34,6 +34,10 @@ class TypeRequest(BaseModel):
     selector: str
     text: str
 
+class SearchRequest(BaseModel):
+    query: str
+    max_results: int = 5
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
@@ -150,6 +154,18 @@ async def get_tools():
                 "name": "browser_screenshot",
                 "description": "Take a screenshot of the current page in the sandbox browser",
                 "parameters": {"type": "object", "properties": {}}
+            },
+            {
+                "name": "search",
+                "description": "Search the web for information",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "The search query"},
+                        "max_results": {"type": "integer", "description": "Maximum number of results to return", "default": 5}
+                    },
+                    "required": ["query"]
+                }
             }
         ]
     }
@@ -287,6 +303,16 @@ async def browser_type(request: TypeRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/search")
+async def search_web(request: SearchRequest):
+    try:
+        from duckduckgo_search import DDGS
+        with DDGS() as ddgs:
+            results = list(ddgs.text(request.query, max_results=request.max_results))
+        return {"status": "success", "results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.on_event("shutdown")
 async def shutdown_event():
     if state["browser"]:
@@ -296,4 +322,4 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)

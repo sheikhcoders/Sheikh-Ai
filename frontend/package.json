@@ -10,9 +10,9 @@
   "dependencies": {
     "vue": "^3.4.0",
     "ant-design-vue": "^4.1.0",
-    "@ant-design/x": "^1.0.0",
-    "@ant-design/x-sdk": "^1.0.0",
-    "@ant-design/x-markdown": "^1.0.0",
+    "@ant-design/x": "latest",
+    "@ant-design/x-sdk": "latest",
+    "@ant-design/x-markdown": "latest",
     "axios": "^1.6.0",
     "lucide-vue-next": "^0.300.0"
   },

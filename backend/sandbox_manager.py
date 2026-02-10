@@ -6,7 +6,7 @@ import time
 class SandboxManager:
     def __init__(self):
         self.client = docker.from_env()
-        self.image_name = "sheikh-ai-sandbox"
+        self.image_name = "accetto/ubuntu-vnc-xfce-chromium"
         self.sandboxes = {}
 
     def create_sandbox(self, session_id=None):

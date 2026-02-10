@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: sheikh-ai-backend
+    env: python
+    buildCommand: pip install -r backend/sandbox_api/requirements.txt && pip install docker fastapi uvicorn httpx python-multipart
+    startCommand: python -m backend.server
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: PYTHON_VERSION
+        value: 3.10.0
+      - key: SESSION_DB_TYPE
+        value: file
+
+  - type: static
+    name: sheikh-ai-frontend
+    env: static
+    buildCommand: cd frontend && npm install && npm run build
+    publishPath: frontend/dist

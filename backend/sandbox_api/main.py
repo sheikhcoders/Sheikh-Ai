@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel
 from typing import List, Optional
 import os
@@ -33,9 +34,141 @@ class TypeRequest(BaseModel):
     selector: str
     text: str
 
+class SearchRequest(BaseModel):
+    query: str
+    max_results: int = 5
+
 @app.get("/health")
 async def health_check():
     return {"status": "ok"}
+
+@app.get("/llms.txt", response_class=PlainTextResponse)
+async def get_llms_txt():
+    content = """# Sheikh-Ai Sandbox API
+
+This API provides a sandboxed Ubuntu environment for AI agents.
+
+## Core Capabilities
+- File Management: List, read, write, and delete files.
+- Shell Execution: Run arbitrary bash commands.
+- Browser Automation: Control a Chrome browser via Playwright.
+
+## Key Endpoints
+- /files: CRUD operations on the filesystem.
+- /shell/execute: Bash command execution.
+- /browser: Navigate, screenshot, click, and type.
+"""
+    return content
+
+@app.get("/llms-full.txt", response_class=PlainTextResponse)
+async def get_llms_full_txt():
+    content = """# Sheikh-Ai Sandbox API Documentation
+
+Detailed documentation of the Sheikh-Ai Sandbox API for LLM consumption.
+
+## Filesystem Tools
+- GET /files/list?path={path}: Returns a list of files and directories.
+- GET /files/read?path={path}: Returns the text content of a file.
+- POST /files/write: Writes content to a path. Body: {"path": "...", "content": "..."}
+- DELETE /files/delete?path={path}: Deletes a file or directory.
+
+## Shell Tools
+- POST /shell/execute: Executes a bash command. Body: {"command": "...", "timeout": 30}
+- Returns stdout, stderr, and return_code.
+
+## Browser Tools
+- POST /browser/goto: Navigates to a URL. Body: {"url": "..."}
+- GET /browser/screenshot: Takes a PNG screenshot and returns the path.
+- POST /browser/click: Clicks an element by selector. Body: {"selector": "..."}
+- POST /browser/type: Fills an input. Body: {"selector": "...", "text": "..."}
+
+## Environment
+- OS: Ubuntu 22.04
+- Browser: Chromium (Playwright)
+- Display: Xvfb (:99)
+- VNC: Available on port 6080
+"""
+    return content
+
+@app.get("/tools")
+async def get_tools():
+    return {
+        "tools": [
+            {
+                "name": "list_files",
+                "description": "List files and directories in the sandbox",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "The directory path to list"}
+                    }
+                }
+            },
+            {
+                "name": "read_file",
+                "description": "Read the content of a file in the sandbox",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "The file path to read"}
+                    },
+                    "required": ["path"]
+                }
+            },
+            {
+                "name": "write_file",
+                "description": "Write content to a file in the sandbox",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "path": {"type": "string", "description": "The file path to write to"},
+                        "content": {"type": "string", "description": "The content to write"}
+                    },
+                    "required": ["path", "content"]
+                }
+            },
+            {
+                "name": "execute_command",
+                "description": "Execute a bash command in the sandbox",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "command": {"type": "string", "description": "The bash command to execute"},
+                        "timeout": {"type": "integer", "description": "Timeout in seconds", "default": 30}
+                    },
+                    "required": ["command"]
+                }
+            },
+            {
+                "name": "browser_goto",
+                "description": "Navigate to a URL in the sandbox browser",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "url": {"type": "string", "description": "The URL to navigate to"}
+                    },
+                    "required": ["url"]
+                }
+            },
+            {
+                "name": "browser_screenshot",
+                "description": "Take a screenshot of the current page in the sandbox browser",
+                "parameters": {"type": "object", "properties": {}}
+            },
+            {
+                "name": "search",
+                "description": "Search the web for information",
+                "parameters": {
+                    "type": "object",
+                    "properties": {
+                        "query": {"type": "string", "description": "The search query"},
+                        "max_results": {"type": "integer", "description": "Maximum number of results to return", "default": 5}
+                    },
+                    "required": ["query"]
+                }
+            }
+        ]
+    }
 
 @app.get("/files/list", response_model=List[FileInfo])
 async def list_files(path: str = "."):
@@ -170,6 +303,16 @@ async def browser_type(request: TypeRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.post("/search")
+async def search_web(request: SearchRequest):
+    try:
+        from duckduckgo_search import DDGS
+        with DDGS() as ddgs:
+            results = list(ddgs.text(request.query, max_results=request.max_results))
+        return {"status": "success", "results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
 @app.on_event("shutdown")
 async def shutdown_event():
     if state["browser"]:
@@ -179,4 +322,4 @@ async def shutdown_event():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8080)

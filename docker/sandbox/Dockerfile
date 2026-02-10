@@ -48,10 +48,14 @@ COPY backend/sandbox_api /app/backend/sandbox_api
 COPY docker/sandbox/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Expose ports
-# API Server
-EXPOSE 8000
-# VNC (websockify)
+# Sandbox API
+EXPOSE 8080
+# VNC
+EXPOSE 5900
+# noVNC
 EXPOSE 6080
+# Chrome CDP
+EXPOSE 9222
 
 # Default command
 CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]

@@ -46,6 +46,27 @@ def test_api():
         print(f"Shell execute: {response.json()}")
         assert "hello from shell" in response.json()["stdout"]
 
+        # Test llms.txt
+        print("Testing llms.txt...")
+        response = httpx.get(f"{base_url}/llms.txt")
+        print(f"llms.txt: {response.text[:50]}...")
+        assert response.status_code == 200
+        assert "# Sheikh-Ai Sandbox API" in response.text
+
+        # Test llms-full.txt
+        print("Testing llms-full.txt...")
+        response = httpx.get(f"{base_url}/llms-full.txt")
+        print(f"llms-full.txt: {response.text[:50]}...")
+        assert response.status_code == 200
+        assert "# Sheikh-Ai Sandbox API Documentation" in response.text
+
+        # Test /tools
+        print("Testing /tools...")
+        response = httpx.get(f"{base_url}/tools")
+        print(f"tools: {len(response.json()['tools'])} tools found.")
+        assert response.status_code == 200
+        assert len(response.json()["tools"]) >= 6
+
         print("Tests passed successfully!")
 
     except Exception as e:
